@@ -1,0 +1,559 @@
+https://www.khanacademy.org/computer-programming/tetris-game-csc-106/5273609163161600 (Website to game)
+
+Code Below:
+
+//variables for the game 
+var lines = 0;
+var high_score = 0;
+var speed = 500;
+var board = [];
+var rows = 20;
+var score = 0;
+var columns = 10;
+var i = 0;
+var new_block = 0;
+var start_time = millis(); // Track start time for timing events
+var last_move = start_time;
+var last_press = start_time;
+var last_down = start_time;
+var gameover = false;
+var currentScene = 0; // Control and scences which part of the game is displayed
+
+// my bitmojit that will be used for the program.
+var mydrawBitmojiFace = function (x,y,size)
+{
+var r = size/100;
+//head shape 
+noStroke();
+fill(224, 173, 112);
+ellipse(x+100*r, y+105*r, 86*r, 100*r);
+
+//chiesel 
+fill(82, 74, 82);
+arc(x+54*r, y+137*r, 24*r, 55*r,0, 360*r); 
+arc(x+146*r, y+137*r, 24*r, 55*r, 0, 360*r); 
+
+//hair
+fill(0, 0, 0);
+arc(x+100*r, y+77*r,97*r,44*r,174,367);
+rect(x+133*r,y+71*r,6*r,25*r);
+rect(x+62*r,y+69*r,6*r,25*r);
+arc(x+69*r, y+87*r, 38*r, 30*r, 128, 247);
+arc(x+133*r, y+87*r, 35*r, 27*r, 272, 431);
+
+//glasses
+stroke(0,0,0);
+fill(224, 172, 105);
+rect(x+75*r, y+90*r, 19*r, 20*r);
+rect(x+105*r, y+90*r, 20*r, 20*r);
+line(x+94*r,y+100*r,x+105*r,y+100*r);
+line(x+75*r,y+100*r,x+57*r,y+95*r);
+line(x+142*r,y+96*r,x+126*r,y+101*r);
+
+//eyes 
+noStroke();
+fill(51, 39, 39);
+ellipse(x+116*r, y+101*r, 5*r, 5*r);
+ellipse(x+86*r, y+101*r, 5*r, 5*r);
+
+//nose
+stroke(0,0,0);
+fill(224, 172, 105);
+bezier(x+99*r, y+102*r, x+121*r, y+123*r, x+92*r, y+116*r, x+95*r, y+118*r);
+
+//ears
+noStroke();
+fill(224,172,105);
+ellipse(x+58*r, y+104*r, 15*r, 20*r);
+ellipse(x+143*r, y+104*r, 15*r, 20*r);
+
+
+//piercing
+noStroke();
+fill(255, 255, 255);
+ellipse(x+100*r, y+113*r, 2*r, 2*r);
+ellipse(x+57*r, y+109*r, 2*r, 2*r);
+ellipse(x+144*r, y+109*r, 2*r, 2*r);
+
+
+//mouth
+stroke(0, 0, 0);
+fill(255, 255, 255);
+arc(x+100*r, y+128*r, 41*r, 13*r, 1, 180);
+};
+var mydrawBitmojiBody = function(x,y,size){
+var r = size/100;
+//clothes
+fill(0, 0, 0);
+rect(x+70*r,y+150*r,61*r,120*r);
+
+//arms
+fill(0, 0, 0); 
+rect(x+50*r, y+150*r, 20*r, 64*r,5*r); 
+rect(x+130*r, y+150*r, 20*r, 71*r,5*r); 
+
+//hands
+fill(224, 172, 105);
+stroke(0, 0, 0);
+ellipse(x+60*r, y+224*r, 25*r, 25*r);
+ellipse(x+141*r, y+229*r, 25*r, 25*r); 
+
+
+//legs
+fill(0, 0, 0); 
+stroke(240, 240, 240);     
+rect(x+75*r, y+270*r, 20*r, 66*r); 
+rect(x+105*r, y+270*r, 20*r, 73*r); 
+
+//shoes
+fill(120, 105, 120);
+rect(x+65*r, y+335*r, 30*r, 10*r);
+rect(x+104*r, y+335*r, 30*r, 10*r);
+
+//facial hair
+noStroke();
+fill(0, 0, 0);
+line(x+123*r,y+127*r,x+76*r,y+128*r);
+rect(x+90*r,y+139*r,19*r,12*r);
+
+//intials
+stroke(255, 255, 255);
+line(x+86*r,y+172*r,x+75*r,y+200*r);
+line(x+86*r,y+170*r,x+95*r,y+201*r);
+line(x+92*r,y+183*r,x+82*r,y+185*r);
+line(x+103*r,y+202*r,x+103*r,y+171*r);
+line(x+104*r,y+203*r,x+120*r,y+201*r);
+    
+};
+
+var mydrawBitmoji = function (x,y,reSize) 
+{
+mydrawBitmojiFace(x,y,reSize);
+mydrawBitmojiBody(x,y,reSize);
+};
+// Button object definition
+var Button = function(config) {
+    this.x = config.x || 0;
+    this.y = config.y || 0;
+    this.width = config.width || 150;
+    this.height = config.height || 50;
+    this.label = config.label || "Click";
+    this.onClick = config.onClick || function() {};
+};
+
+// Draws the button on the screen
+Button.prototype.draw = function() {
+    fill(21, 21, 161);
+    rect(this.x, this.y, this.width, this.height, 25);
+    fill(255, 255, 255);
+    textSize(19);
+    textAlign(LEFT, TOP);
+    text(this.label, this.x + 25, this.y + this.height / 4);
+};
+
+// Checks if the mouse is inside the button
+Button.prototype.isMouseInside = function() {
+    return mouseX > this.x &&
+        mouseX < (this.x + this.width) &&
+        mouseY > this.y &&
+        mouseY < (this.y + this.height);
+};
+
+// Executes the button's onClick function if the mouse is inside the button
+Button.prototype.handleMouseClick = function() {
+    if (this.isMouseInside()) {
+        this.onClick();
+    }
+};
+
+// Creating buttons for starting and replaying the game
+var btn1 = new Button({
+    x: 130,
+    y: 308,
+    label: "Start Game",
+    onClick: function() {
+        currentScene = 1;
+        score = 0;
+    }
+});
+
+
+var btn2 = new Button({
+    x: 115,
+    y: 250,  // Ensure this is positioned differently if it overlaps with btn1
+    label: "Play Again",
+    onClick: function() {
+        // Reset the game board
+        board = [];
+        for (var i = 0; i < rows; i++) {
+            var newRow = [];
+            for (var j = 0; j < columns; j++) {
+                newRow.push(0);
+            }
+            board.push(newRow);
+        }
+        // Reset game variables
+        score = 0;
+        lines = 0;
+        gameover = false;
+        currentScene = 1;  // Switch back to the game scene
+    }
+});
+
+
+mouseClicked = function() {
+    if (currentScene === 0) {
+        btn1.handleMouseClick();
+    } else if (currentScene === 2) {
+        btn2.handleMouseClick();  // Handle clicks when in the Game Over scene
+    }
+};
+ var get_color = function(type) {
+    switch (type) {
+        case 0: return color(255, 0, 0);     // Red
+        case 1: return color(0, 255, 0);     // Green
+        case 2: return color(0, 0, 255);     // Blue
+        case 3: return color(255, 255, 0);   // Yellow
+        case 4: return color(255, 165, 0);   // Orange
+        case 5: return color(75, 0, 130);    // Indigo
+        case 6: return color(238, 130, 238); // Violet
+        default: return color(255, 255, 255); // White for unexpected types
+    }
+};
+// splash screen
+var drawScene0 = function() {
+    
+    background(14, 50, 112);
+    fill(255, 255, 255);
+
+    if (currentScene === 0) {
+        fill(230, 255, 0);
+        rect(66,56,50,50);
+        rect(11,56,50,50);
+        rect(11,109,50,50);
+        rect(65,109,50,50);
+        fill(255, 157, 0);
+        rect(11,164,50,50);
+        rect(65,164,50,50);
+        rect(119,164,50,50);
+        rect(119,108,50,50);
+        fill(0, 230, 255);
+        rect(12,219,50,50);
+        rect(66,219,50,50);
+        rect(120,219,50,50);
+        rect(173,219,50,50);
+        fill(60, 255, 0);
+        rect(226,219,50,50);
+        rect(226,166,50,50);
+        rect(173,166,50,50);
+        rect(173,110,50,50);
+        fill(255, 0, 0);
+        rect(226,111,50,50);
+        rect(226,56,50,50);
+        rect(280,56,50,50);
+        rect(280,2,50,50);
+        fill(132, 0, 255);
+        rect(280,218,50,50);
+        rect(280,166,50,50);
+        rect(280,111,50,50);
+        rect(333,218,50,50);
+        fill(0, 230, 255);
+        rect(333,165,50,50);
+        rect(333,111,50,50);
+        rect(333,57,50,50);
+         rect(333,3,50,50);
+        fill(255, 255, 255);
+        stroke(0, 0, 0);       
+        strokeWeight(6); 
+        textSize(90);
+        text("TETRIS", 45, 120);
+        btn1.draw();
+    }
+};
+
+// Game over screen display function
+var drawScene2 = function () {
+    currentScene = 2;
+    background(0, 0, 0);
+    textSize(30);
+    fill(255, 255, 255);
+    text("Game Over", 103, 100);
+    text("Your Score: " + score, 100, 150);
+    btn2.draw();
+};
+
+
+
+// Initialize the game board with zeros
+while (i < rows) {
+    // local variables to make the loop
+    var j = 0;
+    var row = [];
+    while (j < columns) {
+        row.push(0); // Add a '0' to represent an empty space in the row
+        j++; // Add a '0' to represent an empty space in the row
+    }
+    board.push(row); // Add the newly created row with all '0's to the board
+    i++;  // Move to the next row
+}
+// Function to remove complete rows and increase score 
+var removeCompletedRows = function () {
+    for (var i = rows - 1; i >= 0; i--) {
+        var isRowComplete = true;
+        for (var j = 0; j < columns; j++) {
+            if (board[i][j] === 0) {
+                isRowComplete = false;
+                break;
+            }
+        }
+
+        if (isRowComplete) {
+            // Remove the complete row and shift the rows above it down
+            for (var k = i; k > 0; k--) {
+                for (var j = 0; j < columns; j++) {
+                    board[k][j] = board[k - 1][j];
+                }
+            }
+            // Add a new empty row at the top
+            for (var j = 0; j < columns; j++) {
+                board[0][j] = 0;
+            }
+
+            score += 100;
+            lines++;
+            
+        }
+         
+    }
+};
+
+// Randomize where the blocks will fall.
+var hint_block = [floor(random(0, 7)), 0, floor(random(0, 7)), floor(random(0, 4))];
+var block = [floor(random(0, 7)), 0, floor(random(0, 7))];
+
+
+
+var get_shape = function (block) {
+    strokeWeight(1);
+    if (block[2] === 0) {
+        return [[0, 1]]; // Single block
+    } else if (block[2] === 1) {
+        return [[0, 0], [0, 1], [1, 0], [1, 1]]; // Square block
+    } else if (block[2] === 2) {
+        if (block[3] === 0 || block[3] === 2) {
+            return [[0, 0], [0, 1], [0, 2], [0, 3]]; // Vertical line
+        } else {
+            return [[0, 0], [1, 0], [2, 0], [3, 0]]; // Horizontal line
+        }
+    } else if (block[2] === 3) {
+        if (block[3] === 0) {
+            return [[0, 0], [0, 1], [0, 2], [1, 2]]; // L-shape normal
+        } else if (block[3] === 1) {
+            return [[0, 0], [1, 0], [2, 0], [0, 1]]; // L-shape rotated
+        } else if (block[3] === 2) {
+            return [[0, 0], [1, 0], [1, 1], [1, 2]]; // Reverse L
+        } else {
+            return [[0, 1], [1, 1], [2, 1], [2, 0]]; // Reverse L rotated
+        }
+    } else if (block[2] === 4) {
+        if (block[3] === 0 || block[3] === 2) {
+            return [[0, 1], [1, 1], [1, 0], [2, 0]]; // Z-shape
+        } else {
+            return [[0, 0], [0, 1], [1, 1], [1, 2]]; // Z-shape rotated
+        }
+    } else if (block[2] === 5) {
+        return [[0, 0], [1, 0], [1, 1], [2, 1]]; // S-shape
+    } else if (block[2] === 6) {
+        if (block[3] === 0 || block[3] === 2) {
+            return [[1, 0], [0, 1], [1, 1], [2, 1]]; // T-shape
+        } else {
+            return [[0, 1], [1, 0], [1, 1], [1, 2]]; // T-shape rotated
+        }
+    } else {
+        return [[0, 0]]; // Default block
+    }
+};
+
+var block_shape = function(block) {
+    var shape = get_shape(block);
+    fill(get_color(block[2])); // Set color based on block type
+    stroke(0);
+    for (var i = 0; i < shape.length; i++) {
+        rect((block[0] + shape[i][0]) * 20, (block[1] + shape[i][1]) * 20, 20, 20);
+    }
+    noStroke();
+};
+var move_shape = function (board, block) {
+    if (millis() > last_move + speed) {
+        block[1] += 1;
+        if(keyIsPressed && keyCode === DOWN){
+            speed = 30;
+            
+        }
+        else{
+            speed = 500;
+        }
+        last_move = millis();
+        if (speed > 75) {
+            speed -= 0.1;
+        }
+         if (block[1] <= 0) {
+             gameover = true;
+            drawScene2();
+    }
+    }
+};
+//the loop for the tetris baord
+var drawBoard = function (board) {
+    for (var i = 0; i < rows; i++) {
+        for (var j = 0; j < columns; j++) {
+            if (board[i][j] !== 0) {
+                stroke(0, 0, 0);
+                fill(get_color(board[i][j] - 1));  // Get color based on block type stored in board
+                rect(j * 20, i * 20, 20, 20);
+            }
+        }
+// Draw a vertical line on the right side of the game board to separate it from my Bitmoji
+        
+    }
+    
+};
+
+
+
+// Function to check if the current block is colliding with other blocks
+// Function to check if the current block is colliding with other blocks
+var collision = function (block, board) {
+    var shape = get_shape(block);
+    var colliding = false;
+    for (var i = 0; i < shape.length; i++) {
+        var row = block[1] + shape[i][1] + 1;
+        var col = block[0] + shape[i][0];
+        if (row >= rows || board[row][col] !== 0) {
+            colliding = true;
+            break;
+        }
+    }
+    if (colliding) {
+        for (var i = 0; i < shape.length; i++) {
+            var finalRow = block[1] + shape[i][1];
+            var finalCol = block[0] + shape[i][0];
+            board[finalRow][finalCol] = block[2] + 1;  // Save block type + 1 (to distinguish from empty cells which are '0')
+            if (finalRow === 0) {
+                gameover = true;
+            }
+        }
+        new_block = 1;
+        removeCompletedRows();
+    }
+    return board;
+};
+
+
+//the varable was made to five the player what next block will be coming.
+var draw_hint = function (hint_block) {
+    fill(255, 255, 255);
+    textSize(20);
+    text("next block", 238, 286); // Adjusted coordinates
+    fill(0, 13, 255);
+    block_shape([13, 16, hint_block[2], hint_block[3]]); // Adjusted block position
+};
+
+var to_move_left = false;
+var to_move_right = false;
+// ket function for the blocks to be moved 
+var keyPressed = function () {
+    if (keyCode === LEFT && millis() > last_press + 250) {
+        to_move_left = true;
+        last_press = millis();
+    } else if (keyCode === RIGHT && millis() > last_press + 250) {
+        to_move_right = true;
+        last_press = millis();
+    }
+};
+
+var play = 1;
+//it is what will be drawn onto the screen and what will be called
+var drawScene1 = function () {
+    currentScene = 1;
+    if (play === 1) {
+        if (new_block === 1) {
+            block = hint_block;
+            hint_block = [round(random(3, 6)), 0, floor(random(0, 3)), floor(random(0, 4))];
+            new_block = 0; // Reset new_block
+        }
+        // added style for the program
+        background(8, 35, 79);
+        fill(82, 74, 82);
+        rect(201,6,202,397);
+         fill(0, 0, 0);
+        rect(202,274,208,122);
+     
+        mydrawBitmoji(251,50,45);
+        fill(255, 255, 255);
+        textSize(18);
+        text("Score: " + score, 261, 20);
+    
+        draw_hint(hint_block);
+        line(200, 0, 200, 400);
+        fill(0, 9, 255);
+        block_shape(block);
+        move_shape(board, block);
+        board = collision(block, board);
+        drawBoard(board);
+
+        if (to_move_left) {
+            var i = 0;
+            var shape = get_shape(block);
+            var moveable_left = 1;
+            while (i < shape.length) {
+                if (board[block[1] + shape[i][1]][block[0] - 1 + shape[i][0]] === 1) {
+                    moveable_left = 0;
+                }
+                i++;
+            }
+            if (moveable_left === 1) {
+                if (block[0] > 0) {
+                    block[0] -= 1;
+                }
+            }
+            to_move_left = false;
+        }
+
+        if (to_move_right) {
+            var i = 0;
+            var shape = get_shape(block);
+            var moveable_right = 1;
+            while (i < shape.length) {
+                if (board[block[1] + shape[i][1]][block[0] + 1 + shape[i][0]] === 1) {
+                    moveable_right = 0;
+                }
+                i++;
+            }
+            if (moveable_right === 1) {
+                var can_move = 1;
+                for (var i = 0; i < shape.length; i++) {
+                    if (block[0] + shape[i][0] >= columns - 1) {
+                        can_move = 0;
+                    }
+                }
+                if (can_move === 1) {
+                    block[0] += 1;
+                }
+            }
+            to_move_right = false;
+        }
+    } 
+strokeWeight(1);
+};
+
+
+draw = function () {
+    if (currentScene === 0) {
+        drawScene0();
+    } else if (currentScene === 1) {
+        drawScene1();
+    } if (gameover) {
+         drawScene2();
+    }
+};
